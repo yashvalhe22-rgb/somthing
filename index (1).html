@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>An Enchanted Surprise Just For You!</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Pacifico&family=Inter:wght@400;700;900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f3ff; /* Soft lavender background */
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden; /* Prevent scrollbar from emoji rain */
+        }
+        .reveal-text {
+            font-family: 'Pacifico', cursive; /* Script font for the message */
+            color: #5b21b6; /* Deep purple */
+            text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.7);
+        }
+        .container-bg {
+             background: linear-gradient(135deg, #f3e8ff 0%, #e0cffc 100%); /* Light purple gradient */
+        }
+        
+        /* Floating Card Animation */
+        @keyframes float {
+            0% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(1deg); }
+            100% { transform: translateY(0px) rotate(0deg); }
+        }
+        #card-container {
+            animation: float 5s ease-in-out infinite;
+        }
+
+        /* Confetti/Emoji Rain */
+        .emoji-rain-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 50; /* Above the card */
+            overflow: hidden;
+            display: none; /* Initially hidden */
+        }
+        .emoji-piece {
+            position: absolute;
+            font-size: 2rem;
+            opacity: 0;
+            animation: emoji-fall 5s linear forwards;
+        }
+
+        @keyframes emoji-fall {
+            0% { transform: translateY(-10vh) translateX(0) rotate(0deg); opacity: 0; }
+            10% { opacity: 1; }
+            100% { transform: translateY(100vh) translateX(50px) rotate(720deg); opacity: 0; }
+        }
+
+        /* Sparkle Overlay for Image */
+        .image-sparkle-container {
+            position: relative;
+            display: inline-block;
+        }
+        .sparkle-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at var(--mouse-x) var(--mouse-y), rgba(255,255,255,0.8) 0%, transparent 20%);
+            mix-blend-mode: overlay;
+            opacity: 0; /* Hidden by default */
+            transition: opacity 0.5s ease-in-out;
+            pointer-events: none; /* Allow clicks through */
+        }
+        .sparkle-overlay.active {
+            opacity: 1;
+        }
+
+        /* Heart Pulse Animation */
+        @keyframes heart-pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .heart-pulse {
+            animation: heart-pulse 2s ease-in-out infinite;
+        }
+
+        /* Bird Wing Flap (Simulated) - Apply directly over the image, position as needed */
+        @keyframes wing-flap {
+            0%, 100% { transform: translateY(0) rotateX(0deg); }
+            50% { transform: translateY(-2px) rotateX(5deg); }
+        }
+        .bird-left, .bird-right {
+            position: absolute;
+            width: 15%; /* Adjust based on image bird size */
+            height: 15%; /* Adjust based on image bird size */
+            background-color: transparent; /* Invisible, just for animation target */
+            animation: wing-flap 0.8s ease-in-out infinite;
+            transform-origin: center top;
+        }
+        .bird-left { top: 25%; left: 15%; } /* Position over left bird */
+        .bird-right { top: 25%; right: 15%; } /* Position over right bird */
+    </style>
+</head>
+<body class="p-4">
+
+    <div id="emoji-rain-container" class="emoji-rain-container"></div>
+    
+    <div id="card-container" class="container-bg w-full max-w-sm md:max-w-md mx-auto p-6 shadow-2xl rounded-3xl transition-all duration-500 transform border-4 border-purple-300">
+
+        <div id="initial-view" class="flex flex-col items-center justify-center text-center p-8 h-96">
+            <h1 class="text-3xl font-bold text-purple-700 mb-6">You Have Mail! 💌</h1>
+            <p class="text-lg text-purple-600 mb-4">First, what should I call you?</p>
+
+            <input type="text" id="name-input" placeholder="Enter your name" class="w-full max-w-xs p-3 mb-8 text-center border-2 border-purple-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 transition duration-300">
+            
+            <button onclick="startReveal()" class="
+                px-8 py-4 
+                bg-pink-500 hover:bg-pink-600 
+                text-white font-extrabold 
+                rounded-full shadow-lg shadow-pink-300/50 
+                transition-all duration-300 
+                transform hover:scale-105 active:scale-95
+                text-xl uppercase tracking-wider
+                focus:outline-none focus:ring-4 focus:ring-pink-300
+            ">
+                <span class="animate-pulse">Open Enchanted Card!</span>
+            </button>
+        </div>
+
+        <div id="countdown-view" class="hidden flex flex-col items-center justify-center text-center p-8 h-96">
+             <h2 class="text-2xl font-bold text-purple-700 mb-4">Unveiling Magic in...</h2>
+             <div class="text-8xl font-black text-pink-500" id="countdown-display">3</div>
+             <p class="text-lg text-purple-600 mt-4">Get Ready for a Surprise!</p>
+        </div>
+
+        <div id="surprise-view" class="hidden opacity-0 flex flex-col items-center text-center p-4 transition-opacity duration-1000 ease-in">
+            
+            <h1 class="text-2xl font-bold text-purple-800 mb-4">A Thought Just For <span id="personal-greeting" class="text-pink-500">You</span>:</h1>
+
+            <div class="w-full h-auto rounded-xl overflow-hidden shadow-xl mb-6 border-4 border-white image-sparkle-container">
+                <img src="WhatsApp Image 2025-11-23 at 6.15.13 PM (1).jpeg" 
+                    alt="A magical image of a flower, birds, and a heart" 
+                    class="w-full h-auto object-cover max-h-80"
+                    onerror="this.onerror=null;this.src='https://placehold.co/400x400/9333ea/fff?text=Image+Loading+Error';"
+                >
+                <div class="sparkle-overlay" id="sparkle-overlay"></div>
+                <div class="heart-pulse absolute w-[20%] h-[20%] top-[10%] left-[40%]"></div> <div class="bird-left"></div>
+                <div class="bird-right"></div>
+            </div>
+            
+            <p class="reveal-text text-3xl md:text-4xl leading-snug p-4 mt-2 bg-white/70 rounded-lg shadow-inner min-h-[100px]">
+                </p>
+
+            <p class="text-purple-500 mt-6 text-sm italic">
+                (This message was sent with love)
+            </p>
+
+            <button onclick="resetCard()" class="
+                mt-8 px-6 py-2 
+                bg-purple-500 hover:bg-purple-600 
+                text-white font-bold 
+                rounded-full shadow-md 
+                transition-all duration-300 
+                transform hover:scale-105
+            ">
+                Close Card
+            </button>
+        </div>
+
+    </div>
+
+    <audio id="chime-sound" src="https://www.soundjay.com/misc/sounds/magic-chime-01.mp3" preload="auto"></audio>
+    <audio id="type-sound" src="https://www.soundjay.com/button/sounds/button-20.mp3" preload="auto"></audio>
+
+    <script>
+        const message = "I don't know if it matters to you or not but don't forget to smile";
+        const chimeSound = document.getElementById('chime-sound');
+        const typeSound = document.getElementById('type-sound');
+
+        // Floating Sparkle effect for image
+        const sparkleOverlay = document.getElementById('sparkle-overlay');
+        let mouseX = 50; // Default center
+        let mouseY = 50; // Default center
+
+        sparkleOverlay.parentElement.addEventListener('mousemove', (e) => {
+            const rect = sparkleOverlay.parentElement.getBoundingClientRect();
+            mouseX = ((e.clientX - rect.left) / rect.width) * 100;
+            mouseY = ((e.clientY - rect.top) / rect.height) * 100;
+            sparkleOverlay.style.setProperty('--mouse-x', `${mouseX}%`);
+            sparkleOverlay.style.setProperty('--mouse-y', `${mouseY}%`);
+        });
+
+        function startReveal() {
+            const nameInput = document.getElementById('name-input');
+            const name = nameInput.value.trim();
+            
+            const greetingElement = document.getElementById('personal-greeting');
+            greetingElement.textContent = name || "You";
+
+            document.getElementById('initial-view').classList.add('hidden');
+            
+            const countdownView = document.getElementById('countdown-view');
+            countdownView.classList.remove('hidden');
+            
+            runCountdown(3);
+        }
+
+        function runCountdown(count) {
+            const display = document.getElementById('countdown-display');
+            display.textContent = count;
+
+            if (count > 0) {
+                setTimeout(() => runCountdown(count - 1), 1000);
+            } else {
+                revealSurprise();
+            }
+        }
+
+        function revealSurprise() {
+            document.getElementById('countdown-view').classList.add('hidden');
+            
+            const surpriseView = document.getElementById('surprise-view');
+            surpriseView.classList.remove('hidden');
+            
+            setTimeout(() => {
+                 surpriseView.classList.remove('opacity-0');
+                 playEmojiRain(); // Start emoji rain
+                 playChimeSound(); // Play magical chime
+                 sparkleOverlay.classList.add('active'); // Activate sparkle overlay
+                 typeMessage(document.querySelector('.reveal-text'), message, 50); // Start typing effect
+            }, 50); 
+        }
+
+        function resetCard() {
+            const surpriseView = document.getElementById('surprise-view');
+            surpriseView.classList.add('hidden', 'opacity-0');
+            
+            document.getElementById('initial-view').classList.remove('hidden');
+
+            stopEmojiRain();
+            sparkleOverlay.classList.remove('active'); // Deactivate sparkle overlay
+            document.querySelector('.reveal-text').textContent = ''; // Clear typed message
+        }
+
+        // --- Sound Functions ---
+        function playChimeSound() {
+            if (chimeSound) {
+                chimeSound.currentTime = 0; // Rewind to start
+                chimeSound.volume = 0.6;
+                chimeSound.play().catch(e => console.log("Audio play prevented:", e));
+            }
+        }
+
+        function playTypeSound() {
+            if (typeSound) {
+                typeSound.currentTime = 0; // Rewind to start
+                typeSound.volume = 0.2; // Keep it subtle
+                typeSound.play().catch(e => console.log("Audio play prevented:", e));
+            }
+        }
+
+        // --- Emoji Rain Functions ---
+        const emojis = ['💖', '✨', '🌟', '🌸', '💙']; // Emojis to rain
+        let emojiInterval;
+
+        function createEmojiPiece() {
+            const emoji = document.createElement('span');
+            emoji.classList.add('emoji-piece');
+            emoji.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+            emoji.style.left = Math.random() * 100 + 'vw';
+            emoji.style.animationDelay = (Math.random() * 2) + 's';
+            emoji.style.animationDuration = (Math.random() * 4 + 3) + 's'; // Vary duration
+            document.getElementById('emoji-rain-container').appendChild(emoji);
+            
+            setTimeout(() => {
+                emoji.remove();
+            }, 5000); // Remove after animation finishes
+        }
+
+        function playEmojiRain() {
+            const container = document.getElementById('emoji-rain-container');
+            container.style.display = 'block'; 
+            
+            let count = 0;
+            const maxEmojis = 40; 
+
+            emojiInterval = setInterval(() => {
+                if (count < maxEmojis) {
+                    createEmojiPiece();
+                    count++;
+                } else {
+                    clearInterval(emojiInterval); 
+                    setTimeout(() => {
+                        container.style.display = 'none';
+                    }, 4000); // Hide container after last emoji falls
+                }
+            }, 150); // Create an emoji every 150ms
+        }
+
+        function stopEmojiRain() {
+            clearInterval(emojiInterval);
+            const container = document.getElementById('emoji-rain-container');
+            container.style.display = 'none';
+            container.innerHTML = ''; 
+        }
+
+        // --- Typing Effect for Message ---
+        let typingTimeout;
+        function typeMessage(element, text, delay) {
+            let i = 0;
+            element.textContent = ''; // Clear existing text
+            function typeChar() {
+                if (i < text.length) {
+                    element.textContent += text.charAt(i);
+                    playTypeSound(); // Play sound for each character
+                    i++;
+                    typingTimeout = setTimeout(typeChar, delay);
+                }
+            }
+            typeChar();
+        }
+    </script>
+</body>
+</html>
