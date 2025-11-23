@@ -3,329 +3,242 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>An Enchanted Surprise Just For You!</title>
+    <title>A Multi-Page Animated Surprise</title>
+    <!-- Tailwind CSS ko load karna -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Pacifico&family=Inter:wght@400;700;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Pacifico&family=Inter:wght@400;700&display=swap');
+        
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f7f3ff; /* Soft lavender background */
+            background: linear-gradient(135deg, #f7f3ff 0%, #dcd1ff 100%); /* Soft gradient background */
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            overflow: hidden; /* Prevent scrollbar from emoji rain */
+            overflow: hidden; /* No scrolling */
         }
-        .reveal-text {
-            font-family: 'Pacifico', cursive; /* Script font for the message */
-            color: #5b21b6; /* Deep purple */
-            text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.7);
-        }
-        .container-bg {
-             background: linear-gradient(135deg, #f3e8ff 0%, #e0cffc 100%); /* Light purple gradient */
-        }
-        
-        /* Floating Card Animation */
-        @keyframes float {
-            0% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-10px) rotate(1deg); }
-            100% { transform: translateY(0px) rotate(0deg); }
-        }
-        #card-container {
-            animation: float 5s ease-in-out infinite;
-        }
-
-        /* Confetti/Emoji Rain */
-        .emoji-rain-container {
-            position: fixed;
-            top: 0;
-            left: 0;
+        .page-container {
+            /* Har page ka size */
             width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 50; /* Above the card */
-            overflow: hidden;
-            display: none; /* Initially hidden */
-        }
-        .emoji-piece {
-            position: absolute;
-            font-size: 2rem;
-            opacity: 0;
-            animation: emoji-fall 5s linear forwards;
-        }
-
-        @keyframes emoji-fall {
-            0% { transform: translateY(-10vh) translateX(0) rotate(0deg); opacity: 0; }
-            10% { opacity: 1; }
-            100% { transform: translateY(100vh) translateX(50px) rotate(720deg); opacity: 0; }
+            max-width: 420px; 
+            height: 90vh;
+            max-height: 720px;
+            margin: auto;
+            border-radius: 2rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            background-color: #fff;
+            position: absolute; /* Pages ko ek doosre ke upar rakhne ke liye */
+            transition: opacity 0.6s, transform 0.6s;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
 
-        /* Sparkle Overlay for Image */
-        .image-sparkle-container {
-            position: relative;
-            display: inline-block;
-        }
-        .sparkle-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle at var(--mouse-x) var(--mouse-y), rgba(255,255,255,0.8) 0%, transparent 20%);
-            mix-blend-mode: overlay;
-            opacity: 0; /* Hidden by default */
-            transition: opacity 0.5s ease-in-out;
-            pointer-events: none; /* Allow clicks through */
-        }
-        .sparkle-overlay.active {
-            opacity: 1;
-        }
-
-        /* Heart Pulse Animation */
-        @keyframes heart-pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
+        /* Pulsating Animation for Button */
+        @keyframes pulse-once {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(252, 165, 165, 0.7); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(252, 165, 165, 0); }
             100% { transform: scale(1); }
         }
-        .heart-pulse {
-            animation: heart-pulse 2s ease-in-out infinite;
+        .animate-pulsating-button {
+            animation: pulse-once 1.5s ease-out infinite;
         }
 
-        /* Bird Wing Flap (Simulated) - Apply directly over the image, position as needed */
-        @keyframes wing-flap {
-            0%, 100% { transform: translateY(0) rotateX(0deg); }
-            50% { transform: translateY(-2px) rotateX(5deg); }
+        /* Fluttering Heart Animation for Finale */
+        @keyframes flutter {
+            0% { transform: translateY(0px) rotate(0deg); opacity: 0.8; }
+            50% { transform: translateY(-10px) rotate(3deg); opacity: 1; }
+            100% { transform: translateY(0px) rotate(-3deg); opacity: 0.8; }
         }
-        .bird-left, .bird-right {
-            position: absolute;
-            width: 15%; /* Adjust based on image bird size */
-            height: 15%; /* Adjust based on image bird size */
-            background-color: transparent; /* Invisible, just for animation target */
-            animation: wing-flap 0.8s ease-in-out infinite;
-            transform-origin: center top;
+        .heart-flutter {
+            animation: flutter 2s ease-in-out infinite;
+            font-size: 6rem;
+            color: #ef4444;
+            text-shadow: 0 0 10px #f87171;
         }
-        .bird-left { top: 25%; left: 15%; } /* Position over left bird */
-        .bird-right { top: 25%; right: 15%; } /* Position over right bird */
     </style>
 </head>
-<body class="p-4">
+<body class="p-4" onload="initAudio()">
 
-    <div id="emoji-rain-container" class="emoji-rain-container"></div>
-    
-    <div id="card-container" class="container-bg w-full max-w-sm md:max-w-md mx-auto p-6 shadow-2xl rounded-3xl transition-all duration-500 transform border-4 border-purple-300">
+    <!-- Main App Container -->
+    <div id="app-container" class="relative w-full h-full max-w-sm md:max-w-md">
 
-        <div id="initial-view" class="flex flex-col items-center justify-center text-center p-8 h-96">
-            <h1 class="text-3xl font-bold text-purple-700 mb-6">You Have Mail! 💌</h1>
-            <p class="text-lg text-purple-600 mb-4">First, what should I call you?</p>
-
-            <input type="text" id="name-input" placeholder="Enter your name" class="w-full max-w-xs p-3 mb-8 text-center border-2 border-purple-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 transition duration-300">
-            
-            <button onclick="startReveal()" class="
-                px-8 py-4 
-                bg-pink-500 hover:bg-pink-600 
-                text-white font-extrabold 
-                rounded-full shadow-lg shadow-pink-300/50 
-                transition-all duration-300 
-                transform hover:scale-105 active:scale-95
-                text-xl uppercase tracking-wider
-                focus:outline-none focus:ring-4 focus:ring-pink-300
-            ">
-                <span class="animate-pulse">Open Enchanted Card!</span>
-            </button>
-        </div>
-
-        <div id="countdown-view" class="hidden flex flex-col items-center justify-center text-center p-8 h-96">
-             <h2 class="text-2xl font-bold text-purple-700 mb-4">Unveiling Magic in...</h2>
-             <div class="text-8xl font-black text-pink-500" id="countdown-display">3</div>
-             <p class="text-lg text-purple-600 mt-4">Get Ready for a Surprise!</p>
-        </div>
-
-        <div id="surprise-view" class="hidden opacity-0 flex flex-col items-center text-center p-4 transition-opacity duration-1000 ease-in">
-            
-            <h1 class="text-2xl font-bold text-purple-800 mb-4">A Thought Just For <span id="personal-greeting" class="text-pink-500">You</span>:</h1>
-
-            <div class="w-full h-auto rounded-xl overflow-hidden shadow-xl mb-6 border-4 border-white image-sparkle-container">
-                <img src="123.jpeg" 
-                    alt="A magical image of a flower, birds, and a heart" 
-                    class="w-full h-auto object-cover max-h-80"
-                    onerror="this.onerror=null;this.src='https://placehold.co/400x400/9333ea/fff?text=Image+Loading+Error';"
-                >
-                <div class="sparkle-overlay" id="sparkle-overlay"></div>
-                <div class="heart-pulse absolute w-[20%] h-[20%] top-[10%] left-[40%]"></div> <div class="bird-left"></div>
-                <div class="bird-right"></div>
+        <!-- Page 1: Welcome Screen (Animated Button) -->
+        <div id="page-1" class="page-container flex-col items-center justify-center text-center">
+            <!-- Content -->
+            <div class="flex flex-col items-center justify-center flex-grow">
+                <h1 class="text-4xl font-bold text-purple-700 mb-6 font-serif">Aapke Liye Ek Naya Surprise!</h1> <!-- Aapke liye ek naya surprise! -->
+                <p class="text-lg text-purple-500 mb-10">Yeh ek choti si digital kitaab hai. Panna palatiye!</p>
+                
+                <button onclick="changePage(2); playChime()" class="
+                    px-8 py-4 
+                    bg-pink-500 hover:bg-pink-600 
+                    text-white font-extrabold 
+                    rounded-full shadow-xl 
+                    transition-all duration-300 
+                    transform hover:scale-105 active:scale-95
+                    text-xl uppercase tracking-wider
+                    animate-pulsating-button
+                ">
+                    Kitaab Kholo!
+                </button>
             </div>
+        </div>
+
+        <!-- Page 2: The Image (Your beautiful surprise) -->
+        <div id="page-2" class="page-container hidden opacity-0 translate-x-full">
+            <h1 class="text-2xl font-bold text-purple-800 mb-4 text-center">Ek Khoobsurat Yaadein</h1> <!-- Ek khoobsurat yaadein -->
             
-            <p class="reveal-text text-3xl md:text-4xl leading-snug p-4 mt-2 bg-white/70 rounded-lg shadow-inner min-h-[100px]">
-                </p>
+            <div class="flex-grow flex items-center justify-center p-2">
+                <!-- Image Yahan Load Hogi (Aapka File Name) -->
+                <img src="123.jpeg" 
+                     alt="A beautiful memory image" 
+                     class="w-full h-auto max-h-full object-contain rounded-xl shadow-2xl border-4 border-pink-200"
+                     onerror="this.onerror=null;this.src='https://placehold.co/400x500/9333ea/fff?text=Image+Missing+Rename+File';"
+                >
+            </div>
 
-            <p class="text-purple-500 mt-6 text-sm italic">
-                (This message was sent with love)
-            </p>
-
-            <button onclick="resetCard()" class="
-                mt-8 px-6 py-2 
-                bg-purple-500 hover:bg-purple-600 
-                text-white font-bold 
-                rounded-full shadow-md 
-                transition-all duration-300 
-                transform hover:scale-105
-            ">
-                Close Card
+            <button onclick="changePage(3); playChime()" class="w-full py-3 bg-purple-500 text-white font-bold rounded-lg mt-4 hover:bg-purple-600 transition duration-300">
+                Aage Ka Sandesh Dekhiye
             </button>
         </div>
 
+        <!-- Page 3: The Message (Special animated text) -->
+        <div id="page-3" class="page-container hidden opacity-0 translate-x-full">
+            <h1 class="text-2xl font-bold text-pink-500 mb-6 text-center">Dil Se Nikla Sandesh ❤️</h1> <!-- Dil se nikla sandesh -->
+            
+            <div class="flex-grow flex items-center justify-center p-4 bg-purple-50 rounded-xl shadow-inner border-l-4 border-pink-400">
+                <p id="message-text" class="text-xl text-purple-800 font-serif leading-relaxed text-center opacity-0 transform translate-y-4 transition-all duration-1000">
+                    Jab tum muskurati ho, toh yeh duniya aur bhi khoobsurat lagti hai. Tumhari choti-choti khushiyan mere liye sabse badi hain. Hamesha khush rehna.
+                </p>
+            </div>
+
+            <button onclick="changePage(4); playChime()" class="w-full py-3 bg-pink-500 text-white font-bold rounded-lg mt-4 hover:bg-pink-600 transition duration-300">
+                Aakhri Panna
+            </button>
+        </div>
+
+        <!-- Page 4: Finale (Heart Animation) -->
+        <div id="page-4" class="page-container hidden opacity-0 translate-x-full">
+            <div class="flex flex-col items-center justify-center flex-grow text-center">
+                <div class="heart-flutter">💖</div>
+                <h1 class="text-3xl font-bold text-purple-700 mt-6 mb-4">Aapka Din Shubh Ho!</h1> <!-- Aapka din shubh ho! -->
+                <p class="text-lg text-purple-600">Yeh surprise aapke liye, bas ek chota sa tohfa. Love you!</p>
+            </div>
+
+            <button onclick="changePage(1); playChime()" class="w-full py-3 bg-gray-400 text-white font-bold rounded-lg mt-4 hover:bg-gray-500 transition duration-300">
+                Phir Se Shuru Karein?
+            </button>
+        </div>
+        
     </div>
 
-    <audio id="chime-sound" src="https://www.soundjay.com/misc/sounds/magic-chime-01.mp3" preload="auto"></audio>
-    <audio id="type-sound" src="https://www.soundjay.com/button/sounds/button-20.mp3" preload="auto"></audio>
-
     <script>
-        const message = "I don't know if it matters to you or not but don't forget to smile";
-        const chimeSound = document.getElementById('chime-sound');
-        const typeSound = document.getElementById('type-sound');
+        let currentPage = 1;
+        const totalPages = 4;
+        const pages = [];
+        
+        let audioContext;
+        let isAudioReady = false;
 
-        // Floating Sparkle effect for image
-        const sparkleOverlay = document.getElementById('sparkle-overlay');
-        let mouseX = 50; // Default center
-        let mouseY = 50; // Default center
-
-        sparkleOverlay.parentElement.addEventListener('mousemove', (e) => {
-            const rect = sparkleOverlay.parentElement.getBoundingClientRect();
-            mouseX = ((e.clientX - rect.left) / rect.width) * 100;
-            mouseY = ((e.clientY - rect.top) / rect.height) * 100;
-            sparkleOverlay.style.setProperty('--mouse-x', `${mouseX}%`);
-            sparkleOverlay.style.setProperty('--mouse-y', `${mouseY}%`);
+        // Sabhi pages ko initialize karein
+        document.addEventListener('DOMContentLoaded', () => {
+            for (let i = 1; i <= totalPages; i++) {
+                pages.push(document.getElementById(`page-${i}`));
+            }
+            // Page 1 ko shuru mein dikhayein
+            pages[0].classList.remove('hidden');
         });
 
-        function startReveal() {
-            const nameInput = document.getElementById('name-input');
-            const name = nameInput.value.trim();
-            
-            const greetingElement = document.getElementById('personal-greeting');
-            greetingElement.textContent = name || "You";
-
-            document.getElementById('initial-view').classList.add('hidden');
-            
-            const countdownView = document.getElementById('countdown-view');
-            countdownView.classList.remove('hidden');
-            
-            runCountdown(3);
-        }
-
-        function runCountdown(count) {
-            const display = document.getElementById('countdown-display');
-            display.textContent = count;
-
-            if (count > 0) {
-                setTimeout(() => runCountdown(count - 1), 1000);
-            } else {
-                revealSurprise();
+        // Simple Chime Sound Function (Tone.js ki jagah Web Audio API use kiya hai)
+        function initAudio() {
+            try {
+                // Audio context ko shuru karna jab user click kare (browser security ke liye)
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                isAudioReady = true;
+            } catch (e) {
+                console.warn("Web Audio API not supported or restricted:", e);
+                isAudioReady = false;
             }
         }
 
-        function revealSurprise() {
-            document.getElementById('countdown-view').classList.add('hidden');
+        function playChime() {
+            if (!isAudioReady) {
+                initAudio(); // Audio context ko initialize karne ki koshish karein
+                if (!isAudioReady) return; // Agar phir bhi fail ho toh ruk jaayen
+            }
+
+            // Simple sine wave tone
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(880, audioContext.currentTime); // High pitch for chime
             
-            const surpriseView = document.getElementById('surprise-view');
-            surpriseView.classList.remove('hidden');
-            
+            // Volume envelope
+            gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.05); // Quick attack
+            gainNode.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.5); // Fast decay
+
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.5);
+        }
+
+        function animateMessage() {
+            const msgElement = document.getElementById('message-text');
+            // Animation reset
+            msgElement.classList.remove('opacity-100', 'translate-y-0');
+            msgElement.classList.add('opacity-0', 'translate-y-4');
+
+            // Animation start
             setTimeout(() => {
-                 surpriseView.classList.remove('opacity-0');
-                 playEmojiRain(); // Start emoji rain
-                 playChimeSound(); // Play magical chime
-                 sparkleOverlay.classList.add('active'); // Activate sparkle overlay
-                 typeMessage(document.querySelector('.reveal-text'), message, 50); // Start typing effect
-            }, 50); 
+                msgElement.classList.remove('opacity-0', 'translate-y-4');
+                msgElement.classList.add('opacity-100', 'translate-y-0');
+            }, 100);
         }
 
-        function resetCard() {
-            const surpriseView = document.getElementById('surprise-view');
-            surpriseView.classList.add('hidden', 'opacity-0');
-            
-            document.getElementById('initial-view').classList.remove('hidden');
+        function changePage(nextPage) {
+            // Hiding current page with transition effects
+            const current = pages[currentPage - 1];
+            current.classList.add('opacity-0');
+            current.classList.add(nextPage > currentPage ? '-translate-x-full' : 'translate-x-full');
 
-            stopEmojiRain();
-            sparkleOverlay.classList.remove('active'); // Deactivate sparkle overlay
-            document.querySelector('.reveal-text').textContent = ''; // Clear typed message
-        }
+            // Setting the next page
+            currentPage = nextPage;
+            const next = pages[currentPage - 1];
 
-        // --- Sound Functions ---
-        function playChimeSound() {
-            if (chimeSound) {
-                chimeSound.currentTime = 0; // Rewind to start
-                chimeSound.volume = 0.6;
-                chimeSound.play().catch(e => console.log("Audio play prevented:", e));
-            }
-        }
-
-        function playTypeSound() {
-            if (typeSound) {
-                typeSound.currentTime = 0; // Rewind to start
-                typeSound.volume = 0.2; // Keep it subtle
-                typeSound.play().catch(e => console.log("Audio play prevented:", e));
-            }
-        }
-
-        // --- Emoji Rain Functions ---
-        const emojis = ['💖', '✨', '🌟', '🌸', '💙']; // Emojis to rain
-        let emojiInterval;
-
-        function createEmojiPiece() {
-            const emoji = document.createElement('span');
-            emoji.classList.add('emoji-piece');
-            emoji.textContent = emojis[Math.floor(Math.random() * emojis.length)];
-            emoji.style.left = Math.random() * 100 + 'vw';
-            emoji.style.animationDelay = (Math.random() * 2) + 's';
-            emoji.style.animationDuration = (Math.random() * 4 + 3) + 's'; // Vary duration
-            document.getElementById('emoji-rain-container').appendChild(emoji);
-            
+            // Show the next page after transition delay
             setTimeout(() => {
-                emoji.remove();
-            }, 5000); // Remove after animation finishes
+                // Reset all visibility and position states
+                pages.forEach(p => p.classList.add('hidden'));
+
+                // Set the correct position for the incoming page
+                next.classList.remove('hidden');
+                next.classList.add(nextPage > currentPage ? 'translate-x-full' : '-translate-x-full');
+                
+                // Trigger transition in
+                setTimeout(() => {
+                    next.classList.remove('opacity-0', 'translate-x-full', '-translate-x-full');
+                    next.classList.add('opacity-100', 'translate-x-0');
+                    
+                    // Specific animation for page 3
+                    if (currentPage === 3) {
+                        animateMessage();
+                    }
+                    
+                }, 50); // Small delay to ensure CSS transition is registered
+                
+            }, 600); // Wait for the 'opacity 0.6s' transition to finish
         }
 
-        function playEmojiRain() {
-            const container = document.getElementById('emoji-rain-container');
-            container.style.display = 'block'; 
-            
-            let count = 0;
-            const maxEmojis = 40; 
+        // Initialize Audio context on first user interaction
+        document.querySelector('body').addEventListener('click', initAudio, { once: true });
 
-            emojiInterval = setInterval(() => {
-                if (count < maxEmojis) {
-                    createEmojiPiece();
-                    count++;
-                } else {
-                    clearInterval(emojiInterval); 
-                    setTimeout(() => {
-                        container.style.display = 'none';
-                    }, 4000); // Hide container after last emoji falls
-                }
-            }, 150); // Create an emoji every 150ms
-        }
-
-        function stopEmojiRain() {
-            clearInterval(emojiInterval);
-            const container = document.getElementById('emoji-rain-container');
-            container.style.display = 'none';
-            container.innerHTML = ''; 
-        }
-
-        // --- Typing Effect for Message ---
-        let typingTimeout;
-        function typeMessage(element, text, delay) {
-            let i = 0;
-            element.textContent = ''; // Clear existing text
-            function typeChar() {
-                if (i < text.length) {
-                    element.textContent += text.charAt(i);
-                    playTypeSound(); // Play sound for each character
-                    i++;
-                    typingTimeout = setTimeout(typeChar, delay);
-                }
-            }
-            typeChar();
-        }
     </script>
 </body>
 </html>
